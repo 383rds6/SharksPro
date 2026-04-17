@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SharkBets Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0c10; --bg2: #111318; --bg3: #181c24;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0; --text2: #8890a4; --text3: #555d70;
+    --gold: #f0c04a; --gold2: #c9962a; --green: #3dd68c; --red: #f05252;
+    --blue: #5b9cf6; --purple: #a78bfa;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 1px solid var(--border);
+    background: var(--bg); position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; color: var(--gold); }
+  .logo span { color: var(--text2); font-size: 13px; font-family: var(--font-body); font-weight: 400; display: block; letter-spacing: 1px; margin-top: -4px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .unit-badge {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 6px 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .unit-badge label { font-size: 11px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px; }
+  .unit-input {
+    background: transparent; border: none; color: var(--gold); font-family: var(--font-mono);
+    font-size: 15px; font-weight: 500; width: 70px; text-align: right; outline: none;
+  }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; background: var(--bg2); }
+  .tab {
+    padding: 14px 20px; font-size: 13px; font-weight: 500; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-count {
+    background: var(--bg3); border-radius: 10px; padding: 2px 7px;
+    font-size: 11px; font-family: var(--font-mono); margin-left: 6px; color: var(--text2);
+  }
+  .tab.active .tab-count { background: var(--gold2); color: #000; }
+  .main { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .panel-title { font-family: var(--font-display); font-size: 16px; letter-spacing: 1.5px; color: var(--text2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .panel-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); display: inline-block; }
+  .accounts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .account-chip {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; transition: border-color 0.2s;
+  }
+  .account-chip.active { border-color: var(--gold2); }
+  .account-name { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+  .account-toggle { cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .account-toggle.on { background: rgba(240,192,74,0.15); color: var(--gold); }
+  .account-toggle.off { background: var(--bg); color: var(--text3); }
+  .add-account { display: flex; gap: 8px; margin-top: 12px; }
+  .add-account input {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 9px 14px; color: var(--text); font-family: var(--font-mono); font-size: 13px; outline: none;
+  }
+  .add-account input::placeholder { color: var(--text3); }
+  .btn {
+    background: var(--gold2); color: #000; border: none; border-radius: 8px;
+    padding: 9px 18px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.2s;
+    font-family: var(--font-body);
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .btn.danger { background: rgba(240,82,82,0.15); color: var(--red); border: 1px solid rgba(240,82,82,0.2); }
+  .fetch-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .fetch-bar .btn { padding: 10px 24px; font-size: 14px; }
+  .status-pill { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.5px; }
+  .status-pill.idle { background: var(--bg3); color: var(--text3); }
+  .status-pill.loading { background: rgba(91,156,246,0.15); color: var(--blue); }
+  .status-pill.done { background: rgba(61,214,140,0.12); color: var(--green); }
+  .status-pill.error { background: rgba(240,82,82,0.12); color: var(--red); }
+  .tweets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .tweet-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; position: relative; transition: border-color 0.2s;
+  }
+  .tweet-card.selected { border-color: var(--gold2); }
+  .tweet-card .tw-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tw-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--bg2);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--gold);
+    border: 1px solid var(--border2); flex-shrink: 0;
+  }
+  .tw-meta { flex: 1; min-width: 0; }
+  .tw-handle { font-family: var(--font-mono); font-size: 12px; color: var(--gold); }
+  .tw-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .tw-body { font-size: 13px; line-height: 1.6; color: var(--text); margin-bottom: 10px; }
+  .legs-grid { display: grid; gap: 12px; }
+  .leg-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start;
+  }
+  .leg-card.passed { border-left: 3px solid var(--green); }
+  .leg-card.review { border-left: 3px solid var(--gold); }
+  .leg-card.failed { border-left: 3px solid var(--red); opacity: 0.6; }
+  .leg-header { font-family: var(--font-mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .leg-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .leg-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .leg-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); }
+  .tag-pass { background: rgba(61,214,140,0.12); color: var(--green); }
+  .tag-warn { background: rgba(240,192,74,0.12); color: var(--gold); }
+  .tag-fail { background: rgba(240,82,82,0.12); color: var(--red); }
+  .tag-info { background: rgba(91,156,246,0.12); color: var(--blue); }
+  .odds-box { text-align: right; }
+  .odds-val { font-family: var(--font-display); font-size: 32px; letter-spacing: 1px; }
+  .odds-val.positive { color: var(--green); }
+  .odds-val.negative { color: var(--gold); }
+  .odds-label { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+  .confidence-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 8px; overflow: hidden; }
+  .confidence-fill { height: 100%; border-radius: 2px; }
+  .conf-high { background: var(--green); }
+  .conf-mid { background: var(--gold); }
+  .conf-low { background: var(--red); }
+  .unit-profit { font-size: 12px; color: var(--text2); margin-top: 6px; font-family: var(--font-mono); }
+  .analyze-box { background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .analyze-box p { font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .analyze-box .running { display: flex; align-items: center; gap: 10px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-nav { display: flex; gap: 8px; align-items: center; }
+  .cal-month { font-family: var(--font-display); font-size: 22px; letter-spacing: 2px; color: var(--text); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 11px; font-family: var(--font-mono); color: var(--text3); padding: 8px 4px; }
+  .cal-day {
+    min-height: 80px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px; font-size: 11px; cursor: pointer; transition: border-color 0.2s; position: relative;
+  }
+  .cal-day:hover { border-color: var(--border2); }
+  .cal-day.other-month { opacity: 0.3; }
+  .cal-day.has-legs { border-color: var(--border2); }
+  .cal-day.today { border-color: var(--gold2); }
+  .cal-day-num { font-family: var(--font-mono); font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .cal-day.today .cal-day-num { color: var(--gold); font-weight: 500; }
+  .cal-profit { font-family: var(--font-mono); font-size: 13px; font-weight: 500; margin-top: 2px; }
+  .profit-pos { color: var(--green); }
+  .profit-neg { color: var(--red); }
+  .cal-legs-count { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .cal-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+  .sum-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .sum-label { font-size: 11px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .sum-val { font-family: var(--font-display); font-size: 24px; letter-spacing: 1px; }
+  .settings-section { margin-bottom: 24px; }
+  .settings-label { font-size: 12px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .settings-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .settings-input {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 10px 14px; color: var(--text); font-family: var(--font-mono); font-size: 13px;
+    outline: none; flex: 1;
+  }
+  .settings-input:focus { border-color: var(--gold2); }
+  .filter-list { display: grid; gap: 8px; }
+  .filter-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
+  .filter-toggle { width: 32px; height: 18px; border-radius: 9px; background: var(--border2); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .filter-toggle.on { background: var(--gold2); }
+  .filter-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  .filter-toggle.on::after { transform: translateX(14px); }
+  .filter-name { font-size: 13px; color: var(--text); flex: 1; }
+  .filter-desc { font-size: 11px; color: var(--text3); }
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .empty p { color: var(--text3); font-size: 14px; line-height: 1.7; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="logo">SharkBets<span>SPORTS INTELLIGENCE SYSTEM</span></div>
+    </div>
+    <div class="header-actions">
+      <div class="unit-badge">
+        <label>1 unit =</label>
+        <span style="color:var(--text3)">$</span>
+        <input class="unit-input" id="unitAmount" type="number" value="25" min="1" />
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="feed">Feed <span class="tab-count" id="feedCount">0</span></div>
+    <div class="tab" data-tab="legs">Filtered Legs <span class="tab-count" id="legsCount">0</span></div>
+    <div class="tab" data-tab="calendar">Calendar</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+
+  <div class="main">
+    <!-- FEED TAB -->
+    <div id="tab-feed">
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> X ACCOUNTS</div>
+        <div class="accounts-grid" id="accountsGrid"></div>
+        <div class="add-account">
+          <input id="newAccountInput" type="text" placeholder="@newaccount" />
+          <button class="btn" onclick="addAccount()">Add</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> FETCH & ANALYZE</div>
+        <div class="fetch-bar">
+          <button class="btn" onclick="fetchAndAnalyze()">⚡ Fetch + Run Shark Filter</button>
+          <div id="statusPill" class="status-pill idle">idle</div>
+        </div>
+        <div id="analyzeMsgs"></div>
+        <div id="tweetsArea">
+          <div class="empty"><div class="empty-icon">🦈</div><p>Fetch tweets from selected X accounts<br>to begin shark filter analysis</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEGS TAB -->
+    <div id="tab-legs" style="display:none">
+      <div class="fetch-bar" style="margin-bottom:16px">
+        <button class="btn secondary" onclick="showTab('feed')">← Back to Feed</button>
+        <select id="legFilter" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:9px 14px;font-family:var(--font-mono);font-size:13px;outline:none;" onchange="renderLegs()">
+          <option value="all">All Today's Legs</option>
+          <option value="passed">Sharp (Passed)</option>
+          <option value="review">Needs Review</option>
+        </select>
+      </div>
+      <div id="legsArea">
+        <div class="empty"><div class="empty-icon">📊</div><p>No filtered legs yet.<br>Run the shark filter first.</p></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div id="tab-calendar" style="display:none">
+      <div class="panel">
+        <div class="cal-header">
+          <div class="cal-nav">
+            <button class="btn secondary" onclick="changeMonth(-1)" style="padding:8px 14px">←</button>
+            <div class="cal-month" id="calMonth"></div>
+            <button class="btn secondary" onclick="changeMonth(1)" style="padding:8px 14px">→</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-summary" id="calSummary"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="tab-settings" style="display:none">
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> API KEYS</div>
+        <div class="settings-section">
+          <div class="settings-label">Anthropic API Key</div>
+          <div class="settings-input-row">
+            <input class="settings-input" id="antKey" type="password" />
+            <button class="btn" onclick="saveKeys()">Save</button>
+          </div>
+          <div class="settings-label" style="margin-top:14px">Twitter Bearer Token</div>
+          <div class="settings-input-row">
+            <input class="settings-input" id="twKey" type="password" />
+          </div>
+          <div class="settings-label" style="margin-top:14px">Odds API Key</div>
+          <div class="settings-input-row">
+            <input class="settings-input" id="oddsKey" type="password" />
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> SHARK FILTERS</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px">Toggle which sharp betting criteria Claude uses when filtering legs.</p>
+        <div class="filter-list" id="filterList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> UNIT SIZE</div>
+        <div class="settings-section">
+          <div class="settings-label">1 Unit = $</div>
+          <div class="settings-input-row">
+            <input class="settings-input" id="unitSetting" type="number" value="25" min="1" />
+            <button class="btn" onclick="saveUnit()">Save</button>
+          </div>
+          <p style="font-size:12px;color:var(--text3);margin-top:8px">All P&L calculations use this unit size.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEYS = {
+  ant: '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',
+  tw: 'AAAAAAAAAAAAAAAAAAAAAME%2F9AEAAAAAExtt1ZGwsimdslqp8BlQcJuj%2BkM%3DjM8cGVY7Kq7ZAgyOBa57Bm7eun5tbAc3A7iPknXukay7Hx58tG',
+  odds: 'daab03c88a526a8cfcbf89271d3b0b31'
+};
+
+const DEFAULT_ACCOUNTS = [
+  '@sgp_parlay','@HarryLockPicks','@CodyBrownBets','@DanGambleAI',
+  '@TheInternMason','@loebsleads','@TheDannyClassic'
+];
+
+const SHARK_FILTERS = [
+  { id:'line_move', name:'Line Movement', desc:'Sharp money causing line moves of 1.5+ pts', on:true },
+  { id:'reverse_line', name:'Reverse Line Movement', desc:'Public on opposite side from line move direction', on:true },
+  { id:'steam_move', name:'Steam Move', desc:'Rapid coordinated line movement across books', on:true },
+  { id:'value', name:'Value vs Closing Line', desc:'Odds at least +10 better than expected close', on:true },
+  { id:'market_cons', name:'Market Consensus', desc:'Majority of sharp books agree on direction', on:true },
+  { id:'injury_adj', name:'Injury / Rest Adjusted', desc:'Accounts for key absences and back-to-backs', on:true },
+  { id:'weather', name:'Weather Factor', desc:'Outdoor games checked for wind/rain impact', on:false },
+  { id:'pace', name:'Pace & Matchup Edge', desc:'Statistical pace mismatches exploited', on:true },
+  { id:'closing_line', name:'Closing Line Value', desc:'Bet expected to beat the closing number', on:true },
+  { id:'public_fading', name:'Fade Public Narrative', desc:'Heavy public sides with unfavorable odds', on:true },
+];
+
+let state = {
+  accounts: [...DEFAULT_ACCOUNTS],
+  activeAccounts: new Set(DEFAULT_ACCOUNTS),
+  tweets: [], legs: [],
+  calMonth: new Date().getMonth(),
+  calYear: new Date().getFullYear(),
+  filters: SHARK_FILTERS.map(f => ({...f})),
+  unitAmount: 25,
+  betHistory: {},
+  currentTab: 'feed'
+};
+
+function init() {
+  document.getElementById('antKey').value = KEYS.ant;
+  document.getElementById('twKey').value = KEYS.tw;
+  document.getElementById('oddsKey').value = KEYS.odds;
+  renderAccounts(); renderFilters(); renderCalendar(); setupTabs();
+  seedDemoHistory();
+  document.getElementById('unitSetting').value = state.unitAmount;
+  document.getElementById('unitAmount').addEventListener('input', e => {
+    state.unitAmount = parseFloat(e.target.value) || 25;
+    document.getElementById('unitSetting').value = state.unitAmount;
+  });
+}
+
+function seedDemoHistory() {
+  const now = new Date();
+  [
+    { d:3, legs:3, result:2.8, label:'LeBron 25+ pts +120' },
+    { d:7, legs:2, result:-1, label:'Chiefs -3.5 loss' },
+    { d:10, legs:5, result:4.1, label:'Parlay hit' },
+    { d:14, legs:1, result:1.9, label:'Overs edge' },
+    { d:15, legs:2, result:-2, label:'Line reversal miss' },
+    { d:16, legs:4, result:3.5, label:'Steam move win' },
+  ].forEach(w => {
+    state.betHistory[fmt(now.getFullYear(), now.getMonth(), w.d)] = w;
+  });
+}
+
+function fmt(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function renderAccounts() {
+  document.getElementById('accountsGrid').innerHTML = state.accounts.map(a => `
+    <div class="account-chip ${state.activeAccounts.has(a) ? 'active' : ''}">
+      <span class="account-name">${a}</span>
+      <div style="display:flex;gap:6px">
+        <span class="account-toggle ${state.activeAccounts.has(a)?'on':'off'}" onclick="toggleAccount('${a}')">${state.activeAccounts.has(a)?'ON':'OFF'}</span>
+        <span class="account-toggle" style="background:rgba(240,82,82,0.1);color:var(--red);cursor:pointer" onclick="removeAccount('${a}')">✕</span>
+      </div>
+    </div>`).join('');
+}
+
+function toggleAccount(a) {
+  if(state.activeAccounts.has(a)) state.activeAccounts.delete(a);
+  else state.activeAccounts.add(a);
+  renderAccounts();
+}
+
+function removeAccount(a) {
+  state.accounts = state.accounts.filter(x => x !== a);
+  state.activeAccounts.delete(a);
+  renderAccounts();
+}
+
+function addAccount() {
+  let v = document.getElementById('newAccountInput').value.trim();
+  if(!v) return;
+  if(!v.startsWith('@')) v = '@' + v;
+  if(!state.accounts.includes(v)) { state.accounts.push(v); state.activeAccounts.add(v); renderAccounts(); }
+  document.getElementById('newAccountInput').value = '';
+}
+
+function setStatus(txt, cls) {
+  const p = document.getElementById('statusPill');
+  p.textContent = txt; p.className = 'status-pill ' + cls;
+}
+
+function renderFilters() {
+  document.getElementById('filterList').innerHTML = state.filters.map(f => `
+    <div class="filter-row">
+      <div class="filter-toggle ${f.on?'on':''}" onclick="toggleFilter('${f.id}')"></div>
+      <div style="flex:1"><div class="filter-name">${f.name}</div><div class="filter-desc">${f.desc}</div></div>
+    </div>`).join('');
+}
+
+function toggleFilter(id) {
+  const f = state.filters.find(x => x.id === id);
+  if(f) { f.on = !f.on; renderFilters(); }
+}
+
+function saveKeys() {
+  KEYS.ant = document.getElementById('antKey').value.trim();
+  KEYS.tw = document.getElementById('twKey').value.trim();
+  KEYS.odds = document.getElementById('oddsKey').value.trim();
+  setStatus('Keys saved', 'done');
+  setTimeout(() => setStatus('idle','idle'), 2000);
+}
+
+function saveUnit() {
+  state.unitAmount = parseFloat(document.getElementById('unitSetting').value) || 25;
+  document.getElementById('unitAmount').value = state.unitAmount;
+  renderLegs(); renderCalendar();
+}
+
+// ── ODDS API: fetch today's games via CORS proxy ──────────────────────────
+async function fetchWithTimeout(url, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+async function fetchTodaysGames() {
+  const sports = [
+    'basketball_nba','americanfootball_nfl','baseball_mlb',
+    'icehockey_nhl','basketball_ncaab','americanfootball_ncaaf'
+  ];
+  const todayLocal = new Date().toLocaleDateString('en-CA');
+  const PROXY = 'https://api.allorigins.win/raw?url=';
+
+  // Fire ALL sport requests in parallel with a 7s timeout each
+  const results = await Promise.allSettled(
+    sports.map(async sport => {
+      const target = encodeURIComponent(
+        'https://api.the-odds-api.com/v4/sports/' + sport +
+        '/odds/?apiKey=' + KEYS.odds +
+        '&regions=us&markets=h2h,spreads,totals&oddsFormat=american&dateFormat=iso'
+      );
+      const res = await fetchWithTimeout(PROXY + target, 7000);
+      if (!res.ok) return [];
+      const games = await res.json();
+      if (!Array.isArray(games)) return [];
+      return games
+        .filter(g => new Date(g.commence_time).toLocaleDateString('en-CA') === todayLocal)
+        .map(g => {
+          const fanDuel = (g.bookmakers||[]).find(b => b.key === 'fanduel') || (g.bookmakers||[])[0];
+          const markets = {};
+          (fanDuel?.markets||[]).forEach(m => { markets[m.key] = m.outcomes; });
+          return { id: g.id, sport, homeTeam: g.home_team, awayTeam: g.away_team,
+                   commenceTime: g.commence_time, markets, bookmakerKey: fanDuel?.key || 'n/a' };
+        });
+    })
+  );
+
+  return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+}
+
+// ── Match a leg description against today's game list ─────────────────────
+function legMatchesTodaysGames(legDescription, todayGames) {
+  // IMPORTANT: empty game list means Odds API failed — do NOT allow everything through
+  if (!todayGames || !todayGames.length) return { matched: false, game: null };
+  const desc = legDescription.toLowerCase();
+  for (const g of todayGames) {
+    const home = g.homeTeam.toLowerCase();
+    const away = g.awayTeam.toLowerCase();
+    // Match on any word > 3 chars from either team name
+    const words = [...home.split(/\s+/), ...away.split(/\s+/)].filter(w => w.length > 3);
+    if (words.some(w => desc.includes(w))) return { matched: true, game: g };
+    if (desc.includes(home) || desc.includes(away)) return { matched: true, game: g };
+  }
+  return { matched: false, game: null };
+}
+
+// ── Pull real FanDuel odds for a matched game ─────────────────────────────
+function getFanDuelOdds(game, legDescription) {
+  if (!game) return null;
+  const desc = legDescription.toLowerCase();
+  const homeWords = game.homeTeam.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+  const isHome = homeWords.some(w => desc.includes(w));
+  const teamKey = isHome ? game.homeTeam : game.awayTeam;
+  for (const mk of ['h2h','spreads','totals']) {
+    const outcomes = game.markets[mk];
+    if (!outcomes) continue;
+    const o = outcomes.find(x => x.name === teamKey || x.name === 'Over' || x.name === 'Under');
+    if (o && o.price != null) return o.price;
+  }
+  return null;
+}
+
+async function fetchAndAnalyze() {
+  const active = [...state.activeAccounts];
+  if (!active.length) { alert('Select at least one account.'); return; }
+
+  setStatus('fetching…', 'loading');
+  showMsg('Step 1/3 — Fetching today\'s schedule from Odds API…', 'loading');
+
+  // ── STEP 1: Get today's real schedule FIRST ───────────────────────────────
+  const todayGames = await fetchTodaysGames();
+  state.todayGames = todayGames;
+  const todayDateStr = new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+
+  if (todayGames.length > 0) {
+    showMsg('Step 2/3 — Schedule loaded (' + todayGames.length + ' games). Fetching tweets from X accounts…', 'loading');
+  } else {
+    showMsg('Step 2/3 — Odds API unavailable. Fetching tweets from X accounts…', 'loading');
+  }
+
+  // ── STEP 2: Fetch REAL tweets from Twitter API (parallel, 10s timeout) ────
+  let tweets = [];
+  let twitterError = null;
+  try {
+    const handles = active.map(a => a.replace('@', '')).join(',');
+    const usersRes = await fetchWithTimeout(
+      'https://api.twitter.com/2/users/by?usernames=' + handles + '&user.fields=id,name,username',
+      10000
+    ).then(r => r.ok ? r.json() : r.json().then(e => { throw new Error('Twitter ' + r.status + ': ' + (e.detail || e.title || 'auth error')); }));
+
+    const users = usersRes.data || [];
+    if (!users.length) throw new Error('No matching Twitter accounts found for the selected handles.');
+
+    // Fetch all users' tweets in parallel
+    const tweetResults = await Promise.allSettled(
+      users.map(user =>
+        fetchWithTimeout(
+          'https://api.twitter.com/2/users/' + user.id +
+          '/tweets?max_results=10&tweet.fields=created_at,text',
+          10000
+        ).then(r => r.ok ? r.json() : Promise.reject(new Error('tweets fetch failed')))
+         .then(td => (td.data || []).map(t => ({
+           id: t.id,
+           handle: '@' + user.username,
+           text: t.text,
+           time: new Date(t.created_at).toLocaleTimeString(),
+           avatar: user.username.substring(0, 2).toUpperCase()
+         })))
+      )
+    );
+    tweets = tweetResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  } catch(e) {
+    twitterError = e.message;
+  }
+
+  // If Twitter failed, stop here and tell the user — do NOT fall back to invented picks
+  if (!tweets.length) {
+    const msg = twitterError || 'Twitter API returned no tweets for the selected accounts.';
+    setStatus('Twitter error', 'error');
+    showMsg('Cannot fetch tweets: ' + msg + '<br><small>Check your Bearer Token in Settings, or the selected accounts may have no recent posts.</small>', 'error');
+    return;
+  }
+
+  state.tweets = tweets;
+  document.getElementById('feedCount').textContent = tweets.length;
+  renderTweets();
+
+  // ── STEP 3: Send tweets + schedule to Claude for shark filtering ──────────
+  showMsg('Step 3/3 — Running shark filter on ' + tweets.length + ' tweets…', 'loading');
+
+  const activeFilters = state.filters.filter(f => f.on).map(f => f.name).join(', ');
+  const tweetLines = tweets.map(t => '[' + t.handle + '] ' + t.text).join('\n');
+
+  const scheduleSection = todayGames.length > 0
+    ? 'TODAY\'S CONFIRMED SCHEDULE (' + todayDateStr + '):\n' +
+      todayGames.map(g => g.awayTeam + ' @ ' + g.homeTeam).join('\n')
+    : 'SCHEDULE UNAVAILABLE FROM API — use your own knowledge of ' + todayDateStr + ' to determine which games are real today.';
+
+  const prompt = 'You are a sharp sports betting analyst. Today is ' + todayDateStr + '.\n\n' +
+    scheduleSection + '\n\n' +
+    'TWEETS FROM THE X ACCOUNTS (these are the ONLY source for legs — do not invent any):\n' +
+    tweetLines + '\n\n' +
+    'YOUR JOB:\n' +
+    '1. Read every tweet above. Extract every specific bet/leg mentioned (team spread, moneyline, player prop, total, etc).\n' +
+    '2. For each leg, check if that team or player is actually playing TODAY (' + todayDateStr + ').\n' +
+    '   - If the team/player is NOT playing today: SKIP IT ENTIRELY. Do not include it in output at all.\n' +
+    '3. For legs that ARE on today\'s schedule: evaluate against these shark criteria: ' + activeFilters + '\n' +
+    '   - status "passed" = meets most shark criteria\n' +
+    '   - status "review" = meets some criteria, marginal\n' +
+    '4. NEVER invent legs or picks not found in the tweets above.\n' +
+    '5. NEVER include a leg where the game is not today.\n\n' +
+    'Return ONLY a valid JSON array. No markdown, no explanation, no extra text.\n' +
+    'Each element: {"id":"1","source":"@handle","description":"team/player + bet type + line","sport":"NBA/NFL/MLB/NHL","confidence":75,"status":"passed","americanOdds":-110,"passedFilters":["Line Movement"],"failedFilters":[],"analysis":"one sentence why this is sharp","units":1,"onTodaysSlate":true,"gameInfo":"Away @ Home"}';
+
+  let legs = [];
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': KEYS.ant,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    let raw = (data.content || []).map(c => c.text || '').join('').trim();
+    raw = raw.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '').trim();
+    legs = JSON.parse(raw);
+    if (!Array.isArray(legs)) legs = [];
+  } catch(err) {
+    setStatus('Claude error', 'error');
+    showMsg('Claude API error: ' + err.message + ' — check your Anthropic API key in Settings.', 'error');
+    return;
+  }
+
+  // ── JS ENFORCEMENT: strip anything not on today's slate (belt + suspenders) ──
+  // Even if Claude somehow included an off-slate pick, remove it here completely.
+  if (todayGames.length > 0) {
+    legs = legs.filter(leg => {
+      const { matched } = legMatchesTodaysGames(leg.description, todayGames);
+      return matched;
+    });
+    // Overlay real FanDuel odds where available
+    legs = legs.map(leg => {
+      const { game } = legMatchesTodaysGames(leg.description, todayGames);
+      const realOdds = game ? getFanDuelOdds(game, leg.description) : null;
+      return {
+        ...leg,
+        americanOdds: realOdds !== null ? realOdds : leg.americanOdds,
+        oddsSource: realOdds !== null ? 'FanDuel (live)' : 'Estimated',
+        gameInfo: game ? game.awayTeam + ' @ ' + game.homeTeam : (leg.gameInfo || null)
+      };
+    });
+  }
+
+  // Only keep passed and review — never show failed to user
+  legs = legs.filter(l => l.status === 'passed' || l.status === 'review');
+
+  state.legs = legs;
+  finishAnalysis(legs, todayGames);
+}
+
+function finishAnalysis(legs, todayGames) {
+  const passed = legs.filter(l => l.status === 'passed').length;
+  const review = legs.filter(l => l.status === 'review').length;
+  document.getElementById('legsCount').textContent = passed + review;
+  setStatus((passed + review) + ' legs ready', 'done');
+  const src = todayGames && todayGames.length
+    ? 'Odds API verified (' + todayGames.length + ' games today)'
+    : 'Claude schedule knowledge';
+  showMsg(
+    'Done — ' + passed + ' sharp legs · ' + review + ' review · ' +
+    'Schedule: ' + src,
+    'done'
+  );
+  renderTweets();
+  showTab('legs');
+}
+
+function generateMockTweets() { return []; }
+
+function renderTweets() {
+  if(!state.tweets.length) return;
+  document.getElementById('tweetsArea').innerHTML = `<div class="tweets-grid">${state.tweets.map(t=>`
+    <div class="tweet-card">
+      <div class="tw-header">
+        <div class="tw-avatar">${t.avatar}</div>
+        <div class="tw-meta"><div class="tw-handle">${t.handle}</div><div class="tw-time">${t.time}</div></div>
+      </div>
+      <div class="tw-body">${t.text}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderLegs() {
+  const filter = document.getElementById('legFilter').value;
+  // state.legs only ever contains passed/review — failed are stripped before storage
+  let legs = state.legs.filter(l => l.status !== 'failed');
+  if (filter === 'passed') legs = legs.filter(l => l.status === 'passed');
+  if (filter === 'review') legs = legs.filter(l => l.status === 'review');
+  if (!legs.length) {
+    document.getElementById('legsArea').innerHTML = "<div class=\"empty\"><div class=\"empty-icon\">&#x1F4CA;</div><p>No legs found for today's slate.<br><small style=\"color:var(--text3)\">Only picks from the selected X accounts for today's games appear here.</small></p></div>";
+    return;
+  }
+  const unit = state.unitAmount;
+  const todayStr = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const totalLegs = state.legs.length;
+  const slateBar = totalLegs ? `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;align-items:center">
+    <span style="color:var(--text3)">📅 ${todayStr}</span>
+    <span style="color:var(--green)">${totalLegs} leg${totalLegs !== 1 ? 's' : ''} on today's slate</span>
+    <span style="color:var(--text3)">${state.todayGames ? state.todayGames.length + ' games · Odds API' : 'Claude schedule'}</span>
+  </div>` : '';
+  document.getElementById('legsArea').innerHTML = slateBar + `<div class="legs-grid">${legs.map(leg=>{
+    const cf = leg.confidence>=70?'conf-high':leg.confidence>=50?'conf-mid':'conf-low';
+    const profit = leg.americanOdds>0 ? (leg.americanOdds/100)*leg.units*unit : (100/Math.abs(leg.americanOdds))*leg.units*unit;
+    const risk = leg.units*unit;
+    const oddsStr = leg.americanOdds>0?`+${leg.americanOdds}`:`${leg.americanOdds}`;
+    const liveTag = leg.oddsSource==='FanDuel (live)'
+      ? `<span class="leg-tag tag-pass" style="margin-left:4px">LIVE ODDS</span>`
+      : `<span class="leg-tag" style="background:rgba(255,255,255,0.05);color:var(--text3)">EST. ODDS</span>`;
+    const gameTag = leg.gameInfo
+      ? `<div style="font-size:11px;color:var(--blue);font-family:var(--font-mono);margin-top:6px">🏟 ${leg.gameInfo}</div>`
+      : '';
+    const slateTag = leg.onTodaysSlate===false
+      ? `<span class="leg-tag tag-fail">NOT ON SLATE</span>`
+      : `<span class="leg-tag tag-pass">ON TODAY'S SLATE</span>`;
+    return `<div class="leg-card ${leg.status}">
+      <div>
+        <div class="leg-header">${leg.sport} · ${leg.source}</div>
+        <div class="leg-title">${leg.description}</div>
+        ${gameTag}
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">${leg.analysis}</div>
+        <div class="leg-tags" style="margin-top:10px">
+          ${slateTag}
+          ${(leg.passedFilters||[]).slice(0,3).map(f=>`<span class="leg-tag tag-pass">✓ ${f}</span>`).join('')}
+          ${(leg.failedFilters||[]).slice(0,2).map(f=>`<span class="leg-tag tag-fail">✗ ${f}</span>`).join('')}
+        </div>
+        <div class="confidence-bar" style="margin-top:10px"><div class="confidence-fill ${cf}" style="width:${leg.confidence}%"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">${leg.confidence}% confidence · ${leg.units}u risk</div>
+      </div>
+      <div class="odds-box">
+        <div class="odds-val ${leg.americanOdds>0?'positive':'negative'}">${oddsStr}</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:2px">${liveTag}</div>
+        <div class="unit-profit" style="color:var(--green);margin-top:6px">+$${profit.toFixed(2)}</div>
+        <div class="unit-profit" style="color:var(--text3)">risk $${risk.toFixed(2)}</div>
+        <button class="btn" style="margin-top:8px;padding:6px 12px;font-size:11px" onclick='logBet(${JSON.stringify(leg)})'>Log Bet</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function logBet(leg) {
+  const today = fmt(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+  if(!state.betHistory[today]) state.betHistory[today] = { legs:0, result:0, label:'' };
+  state.betHistory[today].legs++;
+  const profit = leg.americanOdds>0 ? (leg.americanOdds/100)*leg.units : (100/Math.abs(leg.americanOdds))*leg.units;
+  state.betHistory[today].result += profit;
+  state.betHistory[today].label = leg.description.substring(0,40);
+  alert(`Bet logged!\n\n${leg.description.substring(0,70)}\nOdds: ${leg.americanOdds>0?'+':''}${leg.americanOdds}\nRisk: $${(leg.units*state.unitAmount).toFixed(2)}\nTo win: +$${(profit*state.unitAmount).toFixed(2)}\n\nCheck Calendar tab to track results.`);
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonth').textContent = `${months[state.calMonth]} ${state.calYear}`;
+  const first = new Date(state.calYear, state.calMonth, 1).getDay();
+  const days = new Date(state.calYear, state.calMonth+1, 0).getDate();
+  const today = new Date();
+  let html = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+=`<div class="cal-day other-month"></div>`;
+  let totalUnits=0, totalProfit=0, wins=0, bets=0;
+  for(let d=1;d<=days;d++) {
+    const key = fmt(state.calYear, state.calMonth, d);
+    const h = state.betHistory[key];
+    const isToday = d===today.getDate() && state.calMonth===today.getMonth() && state.calYear===today.getFullYear();
+    let inner = `<div class="cal-day-num">${d}</div>`;
+    if(h) {
+      const profit = h.result*state.unitAmount;
+      const sign = h.result>=0?'+':'';
+      totalUnits+=h.result; totalProfit+=profit; bets++;
+      if(h.result>0) wins++;
+      inner+=`<div class="cal-profit ${h.result>=0?'profit-pos':'profit-neg'}">${sign}$${Math.abs(profit).toFixed(0)}</div>`;
+      inner+=`<div class="cal-legs-count">${h.legs} leg${h.legs!==1?'s':''}</div>`;
+    }
+    html+=`<div class="cal-day${h?' has-legs':''}${isToday?' today':''}">${inner}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+  const winRate = bets>0 ? Math.round((wins/bets)*100) : 0;
+  document.getElementById('calSummary').innerHTML = `
+    <div class="sum-card"><div class="sum-label">Month P&L</div><div class="sum-val ${totalProfit>=0?'profit-pos':'profit-neg'}">${totalProfit>=0?'+':''}$${Math.abs(totalProfit).toFixed(0)}</div></div>
+    <div class="sum-card"><div class="sum-label">Total Units</div><div class="sum-val ${totalUnits>=0?'profit-pos':'profit-neg'}">${totalUnits>=0?'+':''}${totalUnits.toFixed(1)}u</div></div>
+    <div class="sum-card"><div class="sum-label">Win Rate</div><div class="sum-val">${winRate}%</div></div>
+    <div class="sum-card"><div class="sum-label">Days Bet</div><div class="sum-val">${bets}</div></div>`;
+}
+
+function changeMonth(dir) {
+  state.calMonth+=dir;
+  if(state.calMonth>11){state.calMonth=0;state.calYear++;}
+  if(state.calMonth<0){state.calMonth=11;state.calYear--;}
+  renderCalendar();
+}
+
+function showTab(tab) {
+  ['feed','legs','calendar','settings'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+    document.querySelectorAll('.tab').forEach(el => {
+      if(el.dataset.tab===t) el.classList.toggle('active', t===tab);
+    });
+  });
+  state.currentTab = tab;
+  if(tab==='legs') renderLegs();
+  if(tab==='calendar') renderCalendar();
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(el => el.addEventListener('click', ()=>showTab(el.dataset.tab)));
+}
+
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+init();
+</script>
+</body>
+</html>
